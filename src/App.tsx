@@ -1,34 +1,81 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect } from 'react'
 import './App.css'
+import axios from 'axios';
+import DataTable from 'react-data-table-component';
+
+type Drug = {
+  id: number;
+  name: string;
+  brand: string;
+  price: string;
+  description: string;
+  classification: string;
+  url: string;
+}
+
+const columns = [
+  {
+    name: 'name',
+    selector: row => row.name,
+  },
+  {
+    name: 'brand',
+    selector: row => row.brand,
+  },
+  {
+    name: 'price',
+    selector: row => row.price,
+  },
+  {
+    name: 'classification',
+    selector: row => row.classification,
+  },
+  {
+    name: 'url',
+    selector: row => row.url,
+  },
+];
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [drugs, setDrugs] = useState([] as Drug[]);
+  const [showDrugs, setShowDrugs] = useState([] as Drug[]);
+
+  useEffect(() => {
+    async function getDrugs() {
+      const drugs = await axios.get(`http://localhost:3000/drugs`);
+  
+      setDrugs(drugs.data);
+      setShowDrugs(drugs.data);
+    }
+
+    getDrugs();
+  }, []);
+
+  function handleSearch(search: string) {
+    const result = drugs.filter((drug) => {
+      return drug.name.includes(search) || drug.description.includes(search) || drug.classification.includes(search);
+    })
+
+    setShowDrugs(result);
+  }
 
   return (
-    <>
+
+    <div className='main-container'>
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <input className='search-bar' type='text' onChange={(e) => {setTimeout(() => handleSearch(e.target.value), 1000)}}/>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+      <div className='content-table'>
+      <DataTable
+        columns={columns}
+        data={showDrugs}
+        fixedHeader={true}
+        style={{
+          columnWidth: '150px'
+        }}
+      />
+    </div>
+    </div>
   )
 }
 
